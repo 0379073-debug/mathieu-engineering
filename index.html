@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mathieu Engineering</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black:#000;--deep:#010d01;--surface:#010e01;--surface2:#021402;
+  --matrix:#00ff41;--matrix-dim:#00cc33;--matrix-dark:#006618;
+  --text:#ccffcc;--muted:#339933;--border:#003300;--border2:#00550a;--white:#e0ffe0;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--black);color:var(--text);font-family:'Share Tech Mono',monospace;overflow-x:hidden;cursor:crosshair;}
+#matrix-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.15;}
+.scanline{position:fixed;inset:0;pointer-events:none;z-index:200;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,65,.01) 2px,rgba(0,255,65,.01) 4px);}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1rem 3rem;background:rgba(0,0,0,.93);border-bottom:1px solid var(--border2);}
+.logo{font-family:'Orbitron',monospace;font-size:.95rem;font-weight:900;color:var(--matrix);letter-spacing:.12em;text-transform:uppercase;text-shadow:0 0 20px rgba(0,255,65,.5);cursor:pointer;}
+.nav-links{display:flex;gap:1.8rem;list-style:none;}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;transition:color .2s;cursor:pointer;padding:.3rem 0;border-bottom:1px solid transparent;}
+.nav-links a:hover,.nav-links a.active{color:var(--matrix);border-bottom-color:var(--matrix);}
+.nav-cta{background:transparent;color:var(--matrix);border:1px solid var(--matrix);padding:.5rem 1.2rem;font-family:'Share Tech Mono',monospace;font-size:.72rem;text-decoration:none;letter-spacing:.1em;transition:all .2s;text-transform:uppercase;cursor:pointer;}
+.nav-cta:hover{background:var(--matrix);color:#000;box-shadow:0 0 18px rgba(0,255,65,.5);}
+
+/* PAGE SYSTEM */
+.page{display:none;min-height:100vh;padding-top:65px;position:relative;z-index:1;}
+.page.active{display:block;}
+@keyframes pageIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.page.active{animation:pageIn .35s ease both;}
+
+/* SHARED */
+section{padding:5rem 3rem;position:relative;z-index:1;}
+.section-tag{font-size:.68rem;color:var(--matrix);letter-spacing:.25em;text-transform:uppercase;margin-bottom:.8rem;}
+.section-tag::before{content:'> ';}
+h2{font-family:'Orbitron',monospace;font-size:clamp(1.4rem,3vw,2.4rem);font-weight:700;margin-bottom:1rem;color:var(--white);letter-spacing:.02em;}
+h3{font-family:'Orbitron',monospace;font-size:.9rem;font-weight:700;color:var(--text);letter-spacing:.05em;}
+.divider{height:1px;background:var(--border);margin:0;}
+.blink{animation:blink 1s step-end infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+@keyframes glitch{0%,94%,100%{transform:none;text-shadow:0 0 40px rgba(0,255,65,.4),0 0 80px rgba(0,255,65,.15);}95%{transform:translateX(-2px) skewX(-1deg);text-shadow:-2px 0 #f00,2px 0 #0ff,0 0 40px rgba(0,255,65,.4);}96%{transform:translateX(2px) skewX(1deg);text-shadow:2px 0 #f00,-2px 0 #0ff,0 0 40px rgba(0,255,65,.4);}97%,99%{transform:none;}98%{transform:translateX(-1px);}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.btn-primary{background:var(--matrix);color:#000;padding:.8rem 1.8rem;font-family:'Share Tech Mono',monospace;font-size:.8rem;font-weight:700;text-decoration:none;letter-spacing:.1em;transition:all .2s;display:inline-block;text-transform:uppercase;cursor:pointer;border:none;}
+.btn-primary:hover{box-shadow:0 0 24px rgba(0,255,65,.6);}
+.btn-secondary{border:1px solid var(--border2);color:var(--muted);padding:.8rem 1.8rem;font-family:'Share Tech Mono',monospace;font-size:.8rem;text-decoration:none;letter-spacing:.1em;transition:all .2s;display:inline-block;text-transform:uppercase;cursor:pointer;background:transparent;}
+.btn-secondary:hover{border-color:var(--matrix);color:var(--matrix);box-shadow:0 0 12px rgba(0,255,65,.2);}
+
+/* TICKER */
+.ticker{background:var(--deep);border-top:1px solid var(--border2);border-bottom:1px solid var(--border2);padding:.65rem 0;overflow:hidden;white-space:nowrap;position:relative;z-index:1;}
+.ticker-inner{display:inline-flex;gap:3rem;animation:ticker 22s linear infinite;}
+.ticker-item{font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--matrix-dim);}
+.ticker-dot{color:var(--matrix);}
+@keyframes ticker{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+
+/* STATS BAR */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-top:1px solid var(--border);border-bottom:1px solid var(--border);position:relative;z-index:1;}
+.stat{background:var(--deep);padding:2rem 2rem;position:relative;overflow:hidden;}
+.stat::before{content:attr(data-code);position:absolute;top:.8rem;right:1rem;font-size:.58rem;color:var(--border2);letter-spacing:.05em;}
+.stat-num{font-family:'Orbitron',monospace;font-size:2.6rem;font-weight:900;color:var(--matrix);line-height:1;margin-bottom:.3rem;text-shadow:0 0 20px rgba(0,255,65,.4);}
+.stat-label{font-size:.68rem;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;}
+
+/* ===== HOME PAGE ===== */
+.hero{min-height:100vh;display:flex;align-items:center;padding:7rem 3rem 4rem;position:relative;z-index:1;}
+.hero-content>*{animation:fadeUp .6s ease both;}
+.hero-pre{font-size:.72rem;color:var(--matrix-dim);letter-spacing:.2em;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;animation-delay:.2s;}
+.hero-pre .line{width:36px;height:1px;background:var(--matrix);display:inline-block;}
+.hero h1{font-family:'Orbitron',monospace;font-size:clamp(2.8rem,7vw,6.5rem);font-weight:900;line-height:1;letter-spacing:-.01em;margin-bottom:1.5rem;color:var(--matrix);text-shadow:0 0 40px rgba(0,255,65,.4),0 0 80px rgba(0,255,65,.15);animation:glitch 8s infinite,fadeUp .6s ease both;animation-delay:.4s;}
+.hero-sub{font-size:.92rem;color:var(--muted);max-width:520px;line-height:1.9;margin-bottom:2.5rem;animation-delay:.6s;}
+.hero-sub .em{color:var(--text);}
+.hero-cmd{display:block;color:var(--matrix-dim);font-size:.75rem;letter-spacing:.05em;margin-top:.4rem;}
+.hero-buttons{display:flex;gap:1rem;flex-wrap:wrap;animation-delay:.8s;}
+
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);}
+.feature{background:var(--deep);padding:2.5rem;transition:background .2s;position:relative;overflow:hidden;}
+.feature::before{content:'';position:absolute;top:0;left:0;width:100%;height:2px;background:var(--matrix);transform:scaleX(0);transform-origin:left;transition:transform .3s;}
+.feature:hover::before{transform:scaleX(1);}
+.feature:hover{background:var(--surface2);}
+.feature-num{font-family:'Orbitron',monospace;font-size:.6rem;color:var(--matrix-dark);letter-spacing:.2em;margin-bottom:1.2rem;}
+.feature h3{margin-bottom:.8rem;}
+.feature p{font-size:.8rem;color:var(--muted);line-height:1.8;}
+
+/* ===== ABOUT PAGE ===== */
+.about-hero{padding:5rem 3rem 3rem;border-bottom:1px solid var(--border);}
+.about-lead{font-size:1.1rem;color:var(--muted);line-height:1.9;max-width:700px;margin-top:1.2rem;}
+.about-lead .em{color:var(--matrix);}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:start;padding:4rem 3rem;}
+.about-text p{font-size:.88rem;color:var(--muted);line-height:2;margin-bottom:1rem;}
+.about-text .em{color:var(--matrix);}
+
+.terminal-box{background:var(--deep);border:1px solid var(--border2);padding:1.5rem;}
+.terminal-bar{display:flex;align-items:center;gap:.5rem;margin-bottom:1.2rem;padding-bottom:.8rem;border-bottom:1px solid var(--border);}
+.t-dot{width:9px;height:9px;border-radius:50%;background:var(--border2);}
+.t-dot:nth-child(1){background:#ff5f57;}.t-dot:nth-child(2){background:#ffbd2e;}.t-dot:nth-child(3){background:#28c840;}
+.t-title{font-size:.65rem;color:var(--muted);margin-left:auto;letter-spacing:.08em;}
+.tline{font-size:.8rem;color:var(--text);line-height:2;margin-bottom:.2rem;}
+.tline .cmd{color:var(--matrix);}.tline .arg{color:#88ffcc;}.tline .out{color:var(--muted);}
+
+.skills-section{padding:0 3rem 4rem;}
+.skills-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;margin-top:2rem;}
+.skill-bar{background:var(--deep);border:1px solid var(--border);padding:1.2rem 1.5rem;}
+.skill-name{font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;margin-bottom:.8rem;display:flex;justify-content:space-between;}
+.skill-name span{color:var(--matrix);}
+.skill-track{background:var(--border);height:4px;position:relative;}
+.skill-fill{height:100%;background:var(--matrix);transition:width 1s ease;box-shadow:0 0 8px rgba(0,255,65,.5);}
+
+.timeline-section{padding:0 3rem 5rem;}
+.timeline{margin-top:2rem;position:relative;}
+.timeline::before{content:'';position:absolute;left:0;top:0;bottom:0;width:1px;background:var(--border2);}
+.timeline-item{padding-left:2.5rem;margin-bottom:2.5rem;position:relative;}
+.timeline-item::before{content:'';position:absolute;left:-4px;top:.4rem;width:9px;height:9px;background:var(--matrix);border-radius:50%;box-shadow:0 0 8px rgba(0,255,65,.6);}
+.timeline-year{font-size:.65rem;color:var(--matrix);letter-spacing:.2em;margin-bottom:.4rem;}
+.timeline-item h3{font-size:.88rem;margin-bottom:.4rem;}
+.timeline-item p{font-size:.8rem;color:var(--muted);line-height:1.7;}
+
+/* ===== PORTFOLIO PAGE ===== */
+.portfolio-hero{padding:5rem 3rem 3rem;border-bottom:1px solid var(--border);}
+.filter-bar{display:flex;gap:.8rem;margin-top:1.5rem;flex-wrap:wrap;}
+.filter-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.4rem 1rem;font-family:'Share Tech Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+.filter-btn:hover,.filter-btn.active{border-color:var(--matrix);color:var(--matrix);}
+.portfolio-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);padding:0;}
+.project-card{background:var(--deep);overflow:hidden;cursor:pointer;transition:background .2s;}
+.project-card:hover{background:var(--surface2);}
+.project-thumb{aspect-ratio:16/9;background:#000;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;}
+.hex-art{font-size:.55rem;color:var(--matrix-dark);line-height:1.6;text-align:center;padding:1rem;user-select:none;letter-spacing:.05em;}
+.project-info{padding:1.5rem;}
+.project-tag{font-size:.62rem;color:var(--matrix);letter-spacing:.2em;text-transform:uppercase;margin-bottom:.4rem;}
+.project-tag::before{content:'[';}.project-tag::after{content:']';}
+.project-info h3{font-size:.82rem;margin-bottom:.4rem;}
+.project-info p{font-size:.76rem;color:var(--muted);line-height:1.7;}
+.project-meta{display:flex;justify-content:space-between;margin-top:1rem;padding-top:.8rem;border-top:1px solid var(--border);font-size:.65rem;color:var(--border2);letter-spacing:.1em;}
+.project-meta .status{color:var(--matrix);}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:500;align-items:center;justify-content:center;padding:2rem;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--deep);border:1px solid var(--border2);max-width:680px;width:100%;max-height:85vh;overflow-y:auto;position:relative;}
+.modal-head{padding:1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;}
+.modal-close{background:transparent;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;padding:.2rem .5rem;font-family:'Share Tech Mono',monospace;transition:color .2s;}
+.modal-close:hover{color:var(--matrix);}
+.modal-body{padding:1.5rem;}
+.modal-body p{font-size:.85rem;color:var(--muted);line-height:1.9;margin-bottom:1rem;}
+.modal-tags{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1.2rem;}
+.tag{font-size:.65rem;border:1px solid var(--border2);color:var(--matrix-dim);padding:.25rem .7rem;letter-spacing:.1em;}
+
+/* ===== BLOG PAGE ===== */
+.blog-hero{padding:5rem 3rem 3rem;border-bottom:1px solid var(--border);}
+.blog-grid{display:grid;grid-template-columns:2fr 1fr;gap:1px;background:var(--border);min-height:60vh;}
+.blog-main{background:var(--deep);}
+.blog-post{padding:2rem 2.5rem;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s;}
+.blog-post:hover{background:var(--surface2);}
+.post-meta{display:flex;gap:1.5rem;margin-bottom:.8rem;}
+.post-date{font-size:.65rem;color:var(--matrix-dim);letter-spacing:.15em;}
+.post-category{font-size:.65rem;color:var(--matrix);letter-spacing:.15em;text-transform:uppercase;}
+.post-category::before{content:'#';}
+.blog-post h3{font-size:.95rem;margin-bottom:.6rem;transition:color .2s;}
+.blog-post:hover h3{color:var(--matrix);}
+.blog-post p{font-size:.8rem;color:var(--muted);line-height:1.8;}
+.read-more{font-size:.7rem;color:var(--matrix-dim);margin-top:.8rem;display:inline-block;letter-spacing:.1em;}
+.read-more::after{content:' >';}
+
+.blog-sidebar{background:var(--deep);}
+.sidebar-block{padding:1.8rem;border-bottom:1px solid var(--border);}
+.sidebar-block h4{font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700;color:var(--text);letter-spacing:.1em;margin-bottom:1rem;}
+.sidebar-tag{display:inline-block;font-size:.65rem;border:1px solid var(--border);color:var(--muted);padding:.2rem .6rem;margin:.2rem;cursor:pointer;transition:all .2s;letter-spacing:.08em;}
+.sidebar-tag:hover{border-color:var(--matrix);color:var(--matrix);}
+.recent-post{padding:.8rem 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.recent-post:last-child{border-bottom:none;}
+.recent-post h5{font-size:.75rem;color:var(--text);line-height:1.5;margin-bottom:.3rem;transition:color .2s;}
+.recent-post:hover h5{color:var(--matrix);}
+.recent-post span{font-size:.62rem;color:var(--matrix-dim);letter-spacing:.1em;}
+.subscribe-box{background:var(--surface2);border:1px solid var(--border2);padding:1.2rem;}
+.subscribe-box p{font-size:.75rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;}
+.mini-form{display:flex;flex-direction:column;gap:.5rem;}
+.mini-form input{background:var(--deep);border:1px solid var(--border);padding:.6rem .8rem;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.72rem;outline:none;}
+.mini-form input:focus{border-color:var(--matrix);}
+.mini-form button{background:var(--matrix);color:#000;border:none;padding:.6rem;font-family:'Share Tech Mono',monospace;font-size:.7rem;font-weight:700;cursor:pointer;letter-spacing:.1em;text-transform:uppercase;}
+
+/* ===== CONTACT PAGE ===== */
+.contact-hero{padding:5rem 3rem 3rem;border-bottom:1px solid var(--border);}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);}
+.contact-form-wrap{background:var(--deep);padding:3rem;}
+.contact-info-wrap{background:var(--surface);padding:3rem;}
+.form-group{margin-bottom:1.5rem;}
+.form-label{display:block;font-size:.68rem;color:var(--matrix);letter-spacing:.2em;text-transform:uppercase;margin-bottom:.5rem;}
+.form-input{width:100%;background:var(--black);border:1px solid var(--border2);padding:.85rem 1rem;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.82rem;outline:none;transition:border-color .2s;}
+.form-input:focus{border-color:var(--matrix);box-shadow:0 0 8px rgba(0,255,65,.15);}
+.form-input::placeholder{color:var(--border2);}
+textarea.form-input{resize:vertical;min-height:140px;line-height:1.7;}
+select.form-input option{background:var(--deep);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.submit-btn{width:100%;background:var(--matrix);color:#000;border:none;padding:1rem;font-family:'Share Tech Mono',monospace;font-size:.85rem;font-weight:700;cursor:pointer;letter-spacing:.12em;text-transform:uppercase;transition:all .2s;margin-top:.5rem;}
+.submit-btn:hover{box-shadow:0 0 24px rgba(0,255,65,.5);}
+.form-status{text-align:center;font-size:.78rem;margin-top:1rem;min-height:1.4rem;color:var(--matrix);}
+
+.contact-info h3{margin-bottom:2rem;}
+.info-item{display:flex;gap:1.2rem;margin-bottom:1.8rem;align-items:flex-start;}
+.info-icon{font-size:.85rem;color:var(--matrix);min-width:20px;margin-top:.15rem;}
+.info-text{font-size:.82rem;line-height:1.7;}
+.info-text strong{display:block;color:var(--text);font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;margin-bottom:.2rem;}
+.info-text a{color:var(--muted);text-decoration:none;transition:color .2s;}
+.info-text a:hover{color:var(--matrix);}
+.social-links{display:flex;gap:.8rem;flex-wrap:wrap;margin-top:2rem;}
+.social-link{border:1px solid var(--border2);color:var(--muted);padding:.5rem 1rem;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:all .2s;text-decoration:none;}
+.social-link:hover{border-color:var(--matrix);color:var(--matrix);}
+.availability{background:var(--deep);border:1px solid var(--border2);padding:1.2rem 1.5rem;margin-top:2rem;display:flex;align-items:center;gap:1rem;}
+.avail-dot{width:8px;height:8px;background:var(--matrix);border-radius:50%;animation:pulse 2s ease infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,255,65,.4);}50%{box-shadow:0 0 0 6px rgba(0,255,65,0);}}
+.avail-text{font-size:.78rem;color:var(--text);}
+.avail-text span{color:var(--matrix);}
+
+/* PATREON */
+.support-band{background:var(--deep);border-top:1px solid var(--border2);border-bottom:1px solid var(--border2);padding:3rem;display:flex;justify-content:space-between;align-items:center;gap:2rem;flex-wrap:wrap;position:relative;z-index:1;}
+.support-band h3{font-size:1.1rem;margin-bottom:.5rem;}
+.support-band p{font-size:.82rem;color:var(--muted);max-width:500px;line-height:1.7;}
+.patreon-btn{background:transparent;color:var(--matrix);border:1px solid var(--matrix);padding:1rem 1.8rem;font-family:'Share Tech Mono',monospace;font-size:.78rem;text-decoration:none;letter-spacing:.1em;white-space:nowrap;transition:all .2s;display:inline-flex;align-items:center;gap:.6rem;text-transform:uppercase;cursor:pointer;}
+.patreon-btn:hover{background:var(--matrix);color:#000;box-shadow:0 0 24px rgba(0,255,65,.4);}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:1.8rem 3rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;position:relative;z-index:1;background:var(--black);}
+.footer-logo{font-family:'Orbitron',monospace;font-weight:900;color:var(--matrix);letter-spacing:.1em;font-size:.82rem;text-shadow:0 0 12px rgba(0,255,65,.4);cursor:pointer;}
+.footer-links{display:flex;gap:1.5rem;}
+.footer-links a{font-size:.68rem;color:var(--muted);text-decoration:none;letter-spacing:.1em;text-transform:uppercase;transition:color .2s;cursor:pointer;}
+.footer-links a:hover{color:var(--matrix);}
+.footer-copy{font-size:.65rem;color:var(--border2);letter-spacing:.08em;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:var(--black);}
+::-webkit-scrollbar-thumb{background:var(--matrix-dark);}
+::-webkit-scrollbar-thumb:hover{background:var(--matrix);}
+</style>
+</head>
+<body>
+
+<canvas id="matrix-canvas"></canvas>
+<div class="scanline"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo" onclick="navigate('home')">Mathieu_Engineering</div>
+  <ul class="nav-links">
+    <li><a onclick="navigate('home')" data-page="home" class="active">Home</a></li>
+    <li><a onclick="navigate('about')" data-page="about">About</a></li>
+    <li><a onclick="navigate('portfolio')" data-page="portfolio">Portfolio</a></li>
+    <li><a onclick="navigate('blog')" data-page="blog">Blog</a></li>
+    <li><a onclick="navigate('contact')" data-page="contact">Contact</a></li>
+  </ul>
+  <button class="nav-cta" onclick="navigate('contact')">[Hire_Me]</button>
+</nav>
+
+<!-- ============================================================ HOME ============================================================ -->
+<div id="page-home" class="page active">
+
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-pre">
+        <span class="line"></span>
+        INIT: SELF_TAUGHT_ENGINEER.exe
+        <span class="blink">▌</span>
+      </div>
+      <h1>BUILDING<br>WHAT<br>MATTERS.</h1>
+      <div class="hero-sub">
+        <span class="em">Engineering without limits</span> — no degree required. Only curiosity, determination, and a drive to build things that actually work.
+        <span class="hero-cmd">> system.status: ONLINE | projects: ACTIVE | limits: NULL</span>
+      </div>
+      <div class="hero-buttons">
+        <button class="btn-primary" onclick="navigate('portfolio')">> Explore_Projects</button>
+        <button class="btn-secondary" onclick="navigate('contact')">[ Get_In_Touch ]</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="ticker">
+    <div class="ticker-inner">
+      <span class="ticker-item">SELF_TAUGHT_ENGINEERING</span><span class="ticker-dot"> ■ </span>
+      <span class="ticker-item">CUSTOM_PROJECTS</span><span class="ticker-dot"> ■ </span>
+      <span class="ticker-item">ADAPTABLE_SOLUTIONS</span><span class="ticker-dot"> ■ </span>
+      <span class="ticker-item">DREAMS_BEYOND_DEGREES</span><span class="ticker-dot"> ■ </span>
+      <span class="ticker-item">CLIENT_CENTRIC_APPROACH</span><span class="ticker-dot"> ■ </span>
+      <span class="ticker-item">SELF_TAUGHT_ENGINEERING</span><span class="ticker-dot"> ■ </span>
+      <span class="ticker-item">CUSTOM_PROJECTS</span><span class="ticker-dot"> ■ </span>
+      <span class="ticker-item">ADAPTABLE_SOLUTIONS</span><span class="ticker-dot"> ■ </span>
+      <span class="ticker-item">DREAMS_BEYOND_DEGREES</span><span class="ticker-dot"> ■ </span>
+      <span class="ticker-item">CLIENT_CENTRIC_APPROACH</span><span class="ticker-dot"> ■ </span>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat" data-code="0x01"><div class="stat-num">5+</div><div class="stat-label">Projects_Completed</div></div>
+    <div class="stat" data-code="0x02"><div class="stat-num">100%</div><div class="stat-label">Self_Taught</div></div>
+    <div class="stat" data-code="0x03"><div class="stat-num">∞</div><div class="stat-label">Ideas_In_Progress</div></div>
+    <div class="stat" data-code="0x04"><div class="stat-num">24/7</div><div class="stat-label">Always_Building</div></div>
+  </div>
+
+  <section>
+    <div class="section-tag">Services</div>
+    <h2>WHAT I BUILD</h2>
+    <div class="features-grid" style="margin-top:2rem;">
+      <div class="feature"><div class="feature-num">SYS::01</div><h3>Custom Engineering</h3><p>Bespoke solutions designed around your exact needs — no cookie-cutter templates, no off-the-shelf compromises.</p></div>
+      <div class="feature"><div class="feature-num">SYS::02</div><h3>Rapid Prototyping</h3><p>From concept to working prototype fast. I iterate quickly and build with purpose, cutting time-to-result.</p></div>
+      <div class="feature"><div class="feature-num">SYS::03</div><h3>Problem Solving</h3><p>Unconventional problems get unconventional solutions. I approach each challenge without preconceptions.</p></div>
+      <div class="feature"><div class="feature-num">SYS::04</div><h3>Systems Design</h3><p>Architecture that scales. Solutions designed to grow alongside your needs, not constrain them.</p></div>
+      <div class="feature"><div class="feature-num">SYS::05</div><h3>Technical Consulting</h3><p>Not sure how to approach a challenge? I'll help you map the terrain and chart the right path forward.</p></div>
+      <div class="feature"><div class="feature-num">SYS::06</div><h3>Patreon Projects</h3><p>Support on Patreon to suggest ideas, commission custom builds, and get direct access to the engineer.</p></div>
+    </div>
+  </section>
+
+  <div class="support-band">
+    <div>
+      <div class="section-tag">Patreon</div>
+      <h3>BACK THE BUILD</h3>
+      <p>Support my work on Patreon — suggest ideas, commission custom projects, and get direct access. Pricing varies by project complexity.</p>
+    </div>
+    <a href="http://patreon.com/mathieuengineering" class="patreon-btn" target="_blank">♥ SUPPORT_ON_PATREON</a>
+  </div>
+
+  <section>
+    <div class="section-tag">Featured</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:2rem;">
+      <h2>LATEST PROJECTS</h2>
+      <button class="btn-secondary" onclick="navigate('portfolio')">[ View_All ]</button>
+    </div>
+    <div class="portfolio-grid">
+      <div class="project-card" onclick="openModal('p1')">
+        <div class="project-thumb"><div class="hex-art">01001101 01000001 01010100<br>48 45 58 20 43 4F 44 45<br>45 4E 47 49 4E 45 45 52<br>01001001 01001110 01000111</div></div>
+        <div class="project-info"><div class="project-tag">Engineering</div><h3>Project_Alpha</h3><p>Add your first project description. What did you build and why?</p><div class="project-meta"><span>2024</span><span class="status">// COMPLETE</span></div></div>
+      </div>
+      <div class="project-card" onclick="openModal('p2')">
+        <div class="project-thumb"><div class="hex-art">01000100 01000101 01010011<br>49 47 4E 20 26 20 42 55<br>49 4C 44 20 53 59 53 54<br>01000101 01001101 01010011</div></div>
+        <div class="project-info"><div class="project-tag">Design</div><h3>Project_Beta</h3><p>Your second project. What problem did it solve? What was the impact?</p><div class="project-meta"><span>2024</span><span class="status">// COMPLETE</span></div></div>
+      </div>
+      <div class="project-card" onclick="openModal('p3')">
+        <div class="project-thumb"><div class="hex-art">01001001 01001110 01001110<br>4F 56 41 54 45 20 42 55<br>49 4C 44 20 43 52 45 41<br>01010100 01000101 00000000</div></div>
+        <div class="project-info"><div class="project-tag">Innovation</div><h3>Project_Gamma</h3><p>Third project. Show visitors what happens when you commit to an idea.</p><div class="project-meta"><span>2025</span><span class="status blink">// IN PROGRESS</span></div></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ============================================================ ABOUT ============================================================ -->
+<div id="page-about" class="page">
+  <div class="about-hero">
+    <div class="section-tag">About</div>
+    <h2>THE ENGINEER<br>BEHIND THE CODE</h2>
+    <p class="about-lead">Self-taught. <span class="em">Relentlessly curious.</span> Building solutions that matter — one project at a time, without waiting for permission from a diploma.</p>
+  </div>
+
+  <div class="about-grid">
+    <div class="about-text">
+      <p>I believe <span class="em">curiosity and determination</span> outperform any certificate. My engineering journey started from zero — learning by building, failing fast, and iterating until it works.</p>
+      <p>Every challenge is approached with <span class="em">versatility and precision</span>. From concept to deployment, I engineer solutions that fit the problem — not the other way around.</p>
+      <p>I work with clients directly to <span class="em">translate vision into reality</span>. No gatekeeping. No unnecessary complexity. Just clear thinking and good work.</p>
+      <p style="color:var(--text);margin-top:1.5rem;font-size:.88rem;">Questions? <button class="btn-secondary" style="display:inline-block;padding:.4rem .9rem;font-size:.72rem;" onclick="navigate('contact')">[ Get_In_Touch ]</button></p>
+    </div>
+    <div class="terminal-box">
+      <div class="terminal-bar"><div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div><span class="t-title">mathieu@engineering:~$</span></div>
+      <div class="tline"><span class="cmd">$ cat</span> <span class="arg">about.txt</span></div>
+      <div class="tline"><span class="out">> Name: Mathieu</span></div>
+      <div class="tline"><span class="out">> Role: Self-Taught Engineer</span></div>
+      <div class="tline"><span class="out">> Location: [Your City], Canada</span></div>
+      <div class="tline"><span class="out">> Status: ACTIVELY_BUILDING</span></div>
+      <div class="tline" style="margin-top:.6rem;"><span class="cmd">$ cat</span> <span class="arg">philosophy.txt</span></div>
+      <div class="tline"><span class="out">> "Even without fancy degrees,</span></div>
+      <div class="tline"><span class="out">   you can do what your heart</span></div>
+      <div class="tline"><span class="out">   desires." — Mathieu</span></div>
+      <div class="tline" style="margin-top:.6rem;"><span class="cmd">$ ping</span> <span class="arg">mathieu.engineering</span></div>
+      <div class="tline"><span class="out">> Reply: 1ms TTL=64 — ONLINE <span class="blink">▌</span></span></div>
+    </div>
+  </div>
+
+  <div class="skills-section">
+    <div class="section-tag">Skills</div>
+    <h2>CORE COMPETENCIES</h2>
+    <div class="skills-grid" id="skills-grid">
+      <!-- filled by JS -->
+    </div>
+  </div>
+
+  <div class="timeline-section">
+    <div class="section-tag">Journey</div>
+    <h2>THE TIMELINE</h2>
+    <div class="timeline">
+      <div class="timeline-item"><div class="timeline-year">2021 // INIT</div><h3>The Beginning</h3><p>Started teaching myself engineering concepts from scratch — online resources, trial and error, and relentless curiosity.</p></div>
+      <div class="timeline-item"><div class="timeline-year">2022 // BUILD</div><h3>First Projects</h3><p>Completed the first set of real projects. Learned more from failure than from success. Kept building.</p></div>
+      <div class="timeline-item"><div class="timeline-year">2023 // SCALE</div><h3>Expanding Scope</h3><p>Took on increasingly complex challenges. Started helping others with their engineering problems.</p></div>
+      <div class="timeline-item"><div class="timeline-year">2024 // LAUNCH</div><h3>Mathieu Engineering</h3><p>Launched as a formal entity. Patreon community started. More projects, more collaboration, more impact.</p></div>
+      <div class="timeline-item"><div class="timeline-year">2025+ // ONGOING</div><h3>Always Building</h3><p>New challenges, new solutions. The journey continues — and the best projects are still ahead. <span class="blink">▌</span></p></div>
+    </div>
+  </div>
+
+  <div class="support-band">
+    <div><div class="section-tag">Support</div><h3>FUEL THE MISSION</h3><p>Back me on Patreon to get direct access, suggest projects, and commission custom engineering work.</p></div>
+    <a href="http://patreon.com/mathieuengineering" class="patreon-btn" target="_blank">♥ SUPPORT_ON_PATREON</a>
+  </div>
+</div>
+
+<!-- ============================================================ PORTFOLIO ============================================================ -->
+<div id="page-portfolio" class="page">
+  <div class="portfolio-hero">
+    <div class="section-tag">Portfolio</div>
+    <h2>ALL PROJECTS</h2>
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterProjects('all',this)">[ ALL ]</button>
+      <button class="filter-btn" onclick="filterProjects('engineering',this)">[ ENGINEERING ]</button>
+      <button class="filter-btn" onclick="filterProjects('design',this)">[ DESIGN ]</button>
+      <button class="filter-btn" onclick="filterProjects('innovation',this)">[ INNOVATION ]</button>
+      <button class="filter-btn" onclick="filterProjects('software',this)">[ SOFTWARE ]</button>
+    </div>
+  </div>
+  <div class="portfolio-grid" id="portfolio-grid" style="background:var(--border);">
+    <!-- filled by JS -->
+  </div>
+</div>
+
+<!-- ============================================================ BLOG ============================================================ -->
+<div id="page-blog" class="page">
+  <div class="blog-hero">
+    <div class="section-tag">Blog</div>
+    <h2>DISPATCHES FROM<br>THE BUILD</h2>
+  </div>
+  <div class="blog-grid">
+    <div class="blog-main" id="blog-posts">
+      <!-- filled by JS -->
+    </div>
+    <div class="blog-sidebar">
+      <div class="sidebar-block">
+        <h4>Categories</h4>
+        <span class="sidebar-tag">#engineering</span>
+        <span class="sidebar-tag">#projects</span>
+        <span class="sidebar-tag">#self-taught</span>
+        <span class="sidebar-tag">#tutorials</span>
+        <span class="sidebar-tag">#mindset</span>
+        <span class="sidebar-tag">#design</span>
+        <span class="sidebar-tag">#hardware</span>
+        <span class="sidebar-tag">#software</span>
+      </div>
+      <div class="sidebar-block">
+        <h4>Recent Posts</h4>
+        <div id="recent-posts"></div>
+      </div>
+      <div class="sidebar-block">
+        <h4>Subscribe</h4>
+        <div class="subscribe-box">
+          <p>Get notified when new projects and posts go live. No spam — only signal.</p>
+          <div class="mini-form">
+            <input type="email" placeholder="your@email.exe">
+            <button>SUBSCRIBE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ CONTACT ============================================================ -->
+<div id="page-contact" class="page">
+  <div class="contact-hero">
+    <div class="section-tag">Contact</div>
+    <h2>ESTABLISH<br>CONNECTION</h2>
+  </div>
+  <div class="contact-grid">
+    <div class="contact-form-wrap">
+      <div class="section-tag">Send Message</div>
+      <h3 style="margin-bottom:1.5rem;">NEW_TRANSMISSION</h3>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" placeholder="Your_Name"></div>
+        <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" placeholder="user@domain.exe"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Subject</label>
+        <select class="form-input">
+          <option>Select_Subject</option>
+          <option>Custom Project Commission</option>
+          <option>Collaboration Inquiry</option>
+          <option>Technical Consulting</option>
+          <option>Patreon / Support</option>
+          <option>General Question</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Message</label><textarea class="form-input" placeholder="> Type your message here..."></textarea></div>
+      <button class="submit-btn" onclick="submitForm()">TRANSMIT_MESSAGE ></button>
+      <div class="form-status" id="form-status"></div>
+    </div>
+    <div class="contact-info-wrap">
+      <div class="section-tag">Info</div>
+      <h3 style="margin-bottom:2rem;">DIRECT_CHANNELS</h3>
+      <div class="info-item"><span class="info-icon">@</span><div class="info-text"><strong>Email</strong><a href="/cdn-cgi/l/email-protection#b7dad6c3dfded2c299d2d9d0ded9d2d2c5ded9d099d4d8dac7d6d9cef7d0dad6dedb99d4d8da"><span class="__cf_email__" data-cfemail="caa7abbea2a3afbfe4afa4ada3a4afafb8a3a4ade4a9a5a7baaba4b38aada7aba3a6e4a9a5a7">[email&#160;protected]</span></a></div></div>
+      <div class="info-item"><span class="info-icon">P</span><div class="info-text"><strong>Patreon</strong><a href="http://patreon.com/mathieuengineering" target="_blank">patreon.com/mathieuengineering</a></div></div>
+      <div class="info-item"><span class="info-icon">#</span><div class="info-text"><strong>Location</strong><span style="color:var(--muted);">Blainville, Quebec, Canada</span></div></div>
+      <div class="info-item"><span class="info-icon">~</span><div class="info-text"><strong>Response Time</strong><span style="color:var(--muted);">Usually within 24–48 hours</span></div></div>
+      <div class="social-links">
+        <a class="social-link" href="http://patreon.com/mathieuengineering" target="_blank">[ Patreon ]</a>
+        <a class="social-link" href="#">[ GitHub ]</a>
+        <a class="social-link" href="#">[ YouTube ]</a>
+        <a class="social-link" href="#">[ Instagram ]</a>
+      </div>
+      <div class="availability">
+        <div class="avail-dot"></div>
+        <div class="avail-text">Currently <span>available</span> for new projects and commissions</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <div><div class="project-tag" id="modal-tag">tag</div><h3 id="modal-title" style="margin-top:.4rem;">Title</h3></div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="modal-desc"></p>
+      <p id="modal-body"></p>
+      <div class="modal-tags" id="modal-tags"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER (shared) -->
+<footer>
+  <div class="footer-logo" onclick="navigate('home')">MATHIEU_ENGINEERING</div>
+  <div class="footer-links">
+    <a onclick="navigate('home')">Home</a>
+    <a onclick="navigate('about')">About</a>
+    <a onclick="navigate('portfolio')">Portfolio</a>
+    <a onclick="navigate('blog')">Blog</a>
+    <a onclick="navigate('contact')">Contact</a>
+  </div>
+  <div class="footer-copy">© 2026 // ALL RIGHTS RESERVED</div>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+/* ---- MATRIX RAIN ---- */
+const canvas=document.getElementById('matrix-canvas'),ctx=canvas.getContext('2d');
+function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+resize();window.addEventListener('resize',()=>{resize();initCols();});
+const chars='アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF<>{}[]/\\|+-=*';
+const fs=14;let cols=[];
+function initCols(){cols=Array.from({length:Math.floor(canvas.width/fs)},()=>Math.floor(Math.random()*-canvas.height));}
+initCols();
+setInterval(()=>{
+  ctx.fillStyle='rgba(0,0,0,.05)';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.font=`${fs}px 'Share Tech Mono',monospace`;
+  cols.forEach((y,i)=>{
+    const c=chars[Math.floor(Math.random()*chars.length)],x=i*fs,b=Math.random();
+    ctx.fillStyle=b>.97?'#fff':b>.8?'#00ff41':'#009922';
+    ctx.fillText(c,x,y);
+    if(y>canvas.height&&Math.random()>.975)cols[i]=0;else cols[i]=y+fs;
+  });
+},50);
+
+/* ---- NAVIGATION ---- */
+function navigate(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-links a').forEach(a=>{a.classList.toggle('active',a.dataset.page===page);});
+  const el=document.getElementById('page-'+page);
+  if(el){el.classList.add('active');window.scrollTo({top:0,behavior:'smooth'});}
+  if(page==='portfolio')renderPortfolio();
+  if(page==='blog')renderBlog();
+  if(page==='about')animateSkills();
+}
+
+/* ---- PROJECTS DATA ---- */
+const projects=[
+  {id:'p1',cat:'engineering',title:'Project_Alpha',tag:'Engineering',year:'2024',status:'COMPLETE',desc:'Describe your first project here.',body:'Add more detail — the challenge, your approach, the technology used, and the outcome. This is your chance to show what you built and why it matters.',tags:['hardware','custom','engineering']},
+  {id:'p2',cat:'design',title:'Project_Beta',tag:'Design',year:'2024',status:'COMPLETE',desc:'Your second project description.',body:'What was the design challenge? What tools and processes did you use? What was the result? Replace this with your real project details.',tags:['design','systems','ux']},
+  {id:'p3',cat:'innovation',title:'Project_Gamma',tag:'Innovation',year:'2025',status:'IN_PROGRESS',desc:'Third project — currently in progress.',body:'Describe what you\'re actively building right now. What problem are you solving? What makes it interesting? Show the work in progress.',tags:['innovation','prototype','wip']},
+  {id:'p4',cat:'software',title:'Project_Delta',tag:'Software',year:'2025',status:'COMPLETE',desc:'A software engineering project.',body:'Detail the software you built — architecture decisions, language and frameworks used, challenges overcome, and what it does for users.',tags:['software','code','automation']},
+  {id:'p5',cat:'engineering',title:'Project_Epsilon',tag:'Engineering',year:'2025',status:'COMPLETE',desc:'Another engineering solution.',body:'Replace with details of your engineering work. What systems were involved? What were the constraints? How did you overcome them?',tags:['engineering','systems','mechanical']},
+  {id:'p6',cat:'innovation',title:'Project_Zeta',tag:'Innovation',year:'2025',status:'IN_PROGRESS',desc:'Experimental project in development.',body:'This is your experimental zone. What are you trying that\'s never been done before? What are you learning? This is the frontier work.',tags:['experimental','research','wip']},
+];
+
+const hexArt=['01001101 01000001 01010100\n48 45 58 20 43 4F 44 45\n45 4E 47 49 4E 45 45 52\n01001001 01001110 01000111','01000100 01000101 01010011\n49 47 4E 20 26 20 42 55\n49 4C 44 20 53 59 53 54\n01000101 01001101 01010011','01001001 01001110 01001110\n4F 56 41 54 45 20 42 55\n49 4C 44 20 43 52 45 41\n01010100 01000101 00000000','53 4F 46 54 57 41 52 45\n01010011 01011001 01010011\n44 45 53 49 47 4E 20 4C\n01000001 01000010 01010011','45 4E 47 20 53 59 53 54\n01000101 01001101 01010011\n4D 45 43 48 41 4E 49 43\n01000001 01001100 00000000','01000101 01011000 01010000\n45 52 49 4D 45 4E 54 41\n4C 20 52 45 53 45 41 52\n01000011 01001000 00000000'];
+
+function renderPortfolio(filter='all'){
+  const grid=document.getElementById('portfolio-grid');
+  const filtered=filter==='all'?projects:projects.filter(p=>p.cat===filter);
+  grid.innerHTML=filtered.map((p,i)=>`
+    <div class="project-card" onclick="openModal('${p.id}')">
+      <div class="project-thumb"><div class="hex-art">${hexArt[i%hexArt.length].replace(/\n/g,'<br>')}</div></div>
+      <div class="project-info">
+        <div class="project-tag">${p.tag}</div>
+        <h3>${p.title}</h3>
+        <p>${p.desc}</p>
+        <div class="project-meta"><span>${p.year}</span><span class="status${p.status.includes('PROGRESS')?` blink`:''}">// ${p.status}</span></div>
+      </div>
+    </div>`).join('');
+}
+
+function filterProjects(cat,btn){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPortfolio(cat);
+}
+
+/* ---- MODAL ---- */
+function openModal(id){
+  const p=projects.find(x=>x.id===id);if(!p)return;
+  document.getElementById('modal-tag').textContent=p.tag;
+  document.getElementById('modal-title').textContent=p.title;
+  document.getElementById('modal-desc').textContent=p.desc;
+  document.getElementById('modal-body').textContent=p.body;
+  document.getElementById('modal-tags').innerHTML=p.tags.map(t=>`<span class="tag">#${t}</span>`).join('');
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(e){
+  if(!e||e.target===document.getElementById('modal'))document.getElementById('modal').classList.remove('open');
+}
+
+/* ---- BLOG ---- */
+const posts=[
+  {date:'2025-03-15',cat:'mindset',title:'Why You Don\'t Need a Degree to Build Great Things',excerpt:'Credentials open doors, but they don\'t build things. Here\'s what actually matters when you\'re starting from zero with nothing but curiosity.'},
+  {date:'2025-02-28',cat:'engineering',title:'How I Approach Complex Engineering Problems',excerpt:'My personal framework for tackling challenges that have no obvious solution — from first principles to working prototype.'},
+  {date:'2025-02-10',cat:'projects',title:'Breaking Down Project Alpha: What I Learned',excerpt:'A deep dive into the decisions, mistakes, and lessons from one of my most challenging builds to date.'},
+  {date:'2025-01-22',cat:'self-taught',title:'The Self-Taught Engineer\'s Toolkit',excerpt:'The resources, methods, and mental models that have made the biggest difference in my learning journey.'},
+  {date:'2025-01-05',cat:'tutorials',title:'Getting Started with [Your Specialty]',excerpt:'A beginner-friendly introduction to the techniques and concepts I use most frequently in my work.'},
+];
+
+function renderBlog(){
+  const container=document.getElementById('blog-posts');
+  container.innerHTML=posts.map(p=>`
+    <div class="blog-post">
+      <div class="post-meta"><span class="post-date">${p.date}</span><span class="post-category">${p.cat}</span></div>
+      <h3>${p.title}</h3>
+      <p>${p.excerpt}</p>
+      <span class="read-more">READ_MORE</span>
+    </div>`).join('');
+  document.getElementById('recent-posts').innerHTML=posts.slice(0,4).map(p=>`
+    <div class="recent-post"><h5>${p.title}</h5><span>${p.date}</span></div>`).join('');
+}
+
+/* ---- SKILLS ---- */
+const skills=[
+  {name:'Engineering Design',pct:85},{name:'Problem Solving',pct:92},{name:'Systems Thinking',pct:88},
+  {name:'Rapid Prototyping',pct:80},{name:'Technical Research',pct:90},{name:'Client Communication',pct:78},
+];
+function animateSkills(){
+  const g=document.getElementById('skills-grid');
+  g.innerHTML=skills.map(s=>`
+    <div class="skill-bar">
+      <div class="skill-name">${s.name}<span>${s.pct}%</span></div>
+      <div class="skill-track"><div class="skill-fill" style="width:0%" data-w="${s.pct}%"></div></div>
+    </div>`).join('');
+  setTimeout(()=>{g.querySelectorAll('.skill-fill').forEach(el=>el.style.width=el.dataset.w);},100);
+}
+
+/* ---- FORM ---- */
+function submitForm(){
+  const s=document.getElementById('form-st

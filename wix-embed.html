@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mathieu Engineering — Embed</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<!--
+  WIX EMBED INSTRUCTIONS
+  ======================
+  1. Host this file somewhere free:
+     - Upload to GitHub Pages: github.com → new repo → upload file → Settings → Pages → enable
+     - Or drag to netlify.com for instant URL
+  2. Copy the live URL (e.g. https://yourname.github.io/embed/wix-embed.html)
+  3. In Wix Editor: Add → Embed → HTML iFrame
+  4. Paste the URL into the iframe source
+  5. Set iframe height to match content (suggest 900px per section)
+  
+  This file shows the HOME section only — clean, no nav.
+  Use multiple iframes for multiple sections, or use index.html as a full standalone site.
+-->
+<style>
+:root{--black:#000;--deep:#010d01;--surface:#010e01;--surface2:#021402;--matrix:#00ff41;--matrix-dim:#00cc33;--matrix-dark:#006618;--text:#ccffcc;--muted:#339933;--border:#003300;--border2:#00550a;--white:#e0ffe0;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--black);color:var(--text);font-family:'Share Tech Mono',monospace;overflow-x:hidden;}
+#mc{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.15;}
+.scanline{position:fixed;inset:0;pointer-events:none;z-index:200;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,65,.01) 2px,rgba(0,255,65,.01) 4px);}
+.wrap{position:relative;z-index:1;}
+.blink{animation:blink 1s step-end infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+@keyframes glitch{0%,94%,100%{transform:none;text-shadow:0 0 40px rgba(0,255,65,.4),0 0 80px rgba(0,255,65,.15);}95%{transform:translateX(-2px) skewX(-1deg);text-shadow:-2px 0 #f00,2px 0 #0ff,0 0 40px rgba(0,255,65,.4);}96%{transform:translateX(2px) skewX(1deg);text-shadow:2px 0 #f00,-2px 0 #0ff,0 0 40px rgba(0,255,65,.4);}97%,99%{transform:none;}98%{transform:translateX(-1px);}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+@keyframes ticker{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;padding:5rem 3rem;position:relative;z-index:1;}
+.hero>*{animation:fadeUp .6s ease both;}
+.hero-pre{font-size:.72rem;color:var(--matrix-dim);letter-spacing:.2em;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;animation-delay:.2s;}
+.line{width:36px;height:1px;background:var(--matrix);display:inline-block;}
+h1{font-family:'Orbitron',monospace;font-size:clamp(2.6rem,8vw,6rem);font-weight:900;line-height:1;letter-spacing:-.01em;margin-bottom:1.5rem;color:var(--matrix);text-shadow:0 0 40px rgba(0,255,65,.4),0 0 80px rgba(0,255,65,.15);animation:glitch 8s infinite,fadeUp .6s ease both;animation-delay:.4s;}
+.sub{font-size:.92rem;color:var(--muted);max-width:500px;line-height:1.9;margin-bottom:2.5rem;animation-delay:.6s;}
+.sub .em{color:var(--text);}
+.cmd-line{display:block;color:var(--matrix-dim);font-size:.72rem;margin-top:.4rem;letter-spacing:.05em;}
+.btns{display:flex;gap:1rem;flex-wrap:wrap;animation-delay:.8s;}
+.btn-p{background:var(--matrix);color:#000;padding:.8rem 1.8rem;font-family:'Share Tech Mono',monospace;font-size:.8rem;font-weight:700;text-decoration:none;letter-spacing:.1em;transition:all .2s;text-transform:uppercase;}
+.btn-p:hover{box-shadow:0 0 24px rgba(0,255,65,.6);}
+.btn-s{border:1px solid var(--border2);color:var(--muted);padding:.8rem 1.8rem;font-family:'Share Tech Mono',monospace;font-size:.8rem;text-decoration:none;letter-spacing:.1em;transition:all .2s;text-transform:uppercase;}
+.btn-s:hover{border-color:var(--matrix);color:var(--matrix);}
+
+/* TICKER */
+.ticker{background:var(--deep);border-top:1px solid var(--border2);border-bottom:1px solid var(--border2);padding:.65rem 0;overflow:hidden;white-space:nowrap;}
+.ti{display:inline-flex;gap:3rem;animation:ticker 22s linear infinite;}
+.t-item{font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--matrix-dim);}
+.t-dot{color:var(--matrix);}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);}
+.stat{background:var(--deep);padding:2rem;position:relative;}
+.stat::before{content:attr(data-code);position:absolute;top:.7rem;right:.8rem;font-size:.55rem;color:var(--border2);}
+.sn{font-family:'Orbitron',monospace;font-size:2.4rem;font-weight:900;color:var(--matrix);line-height:1;margin-bottom:.3rem;text-shadow:0 0 20px rgba(0,255,65,.4);}
+.sl{font-size:.65rem;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;}
+
+/* FEATURES */
+.section{padding:4rem 3rem;}
+.stag{font-size:.68rem;color:var(--matrix);letter-spacing:.25em;text-transform:uppercase;margin-bottom:.8rem;}
+.stag::before{content:'> ';}
+h2{font-family:'Orbitron',monospace;font-size:clamp(1.4rem,3vw,2.2rem);font-weight:700;margin-bottom:1.5rem;color:var(--white);}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);}
+.feat{background:var(--deep);padding:2.2rem;transition:background .2s;position:relative;overflow:hidden;}
+.feat::before{content:'';position:absolute;top:0;left:0;width:100%;height:2px;background:var(--matrix);transform:scaleX(0);transform-origin:left;transition:transform .3s;}
+.feat:hover::before{transform:scaleX(1);}
+.feat:hover{background:var(--surface2);}
+.fnum{font-family:'Orbitron',monospace;font-size:.6rem;color:var(--matrix-dark);letter-spacing:.2em;margin-bottom:1.2rem;}
+.feat h3{font-family:'Orbitron',monospace;font-size:.82rem;font-weight:700;color:var(--text);letter-spacing:.05em;margin-bottom:.7rem;}
+.feat p{font-size:.78rem;color:var(--muted);line-height:1.8;}
+
+/* SUPPORT */
+.support{background:var(--deep);border-top:1px solid var(--border2);border-bottom:1px solid var(--border2);padding:3rem;display:flex;justify-content:space-between;align-items:center;gap:2rem;flex-wrap:wrap;}
+.support p{font-size:.82rem;color:var(--muted);max-width:480px;line-height:1.7;margin-top:.5rem;}
+.pbtn{background:transparent;color:var(--matrix);border:1px solid var(--matrix);padding:1rem 1.8rem;font-family:'Share Tech Mono',monospace;font-size:.78rem;text-decoration:none;letter-spacing:.1em;white-space:nowrap;transition:all .2s;text-transform:uppercase;}
+.pbtn:hover{background:var(--matrix);color:#000;box-shadow:0 0 24px rgba(0,255,65,.4);}
+
+/* FOOTER STRIP */
+.foot{border-top:1px solid var(--border);padding:1.5rem 3rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem;}
+.flogo{font-family:'Orbitron',monospace;font-weight:900;color:var(--matrix);letter-spacing:.1em;font-size:.82rem;text-shadow:0 0 12px rgba(0,255,65,.4);}
+.femail{font-size:.72rem;color:var(--muted);text-decoration:none;transition:color .2s;}
+.femail:hover{color:var(--matrix);}
+.fcopy{font-size:.62rem;color:var(--border2);letter-spacing:.08em;}
+</style>
+</head>
+<body>
+<canvas id="mc"></canvas>
+<div class="scanline"></div>
+
+<div class="wrap">
+
+  <section class="hero">
+    <div>
+      <div class="hero-pre"><span class="line"></span>INIT: SELF_TAUGHT_ENGINEER.exe <span class="blink">▌</span></div>
+      <h1>BUILDING<br>WHAT<br>MATTERS.</h1>
+      <div class="sub">
+        <span class="em">Engineering without limits</span> — no degree required. Only curiosity, determination, and a drive to build things that actually work.
+        <span class="cmd-line">> system.status: ONLINE | projects: ACTIVE | limits: NULL</span>
+      </div>
+      <div class="btns">
+        <a href="#projects" class="btn-p">> Explore_Projects</a>
+        <a href="mailto:mathieu.engineering.company@gmail.com" class="btn-s">[ Contact_Me ]</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="ticker">
+    <div class="ti">
+      <span class="t-item">SELF_TAUGHT_ENGINEERING</span><span class="t-dot"> ■ </span>
+      <span class="t-item">CUSTOM_PROJECTS</span><span class="t-dot"> ■ </span>
+      <span class="t-item">ADAPTABLE_SOLUTIONS</span><span class="t-dot"> ■ </span>
+      <span class="t-item">DREAMS_BEYOND_DEGREES</span><span class="t-dot"> ■ </span>
+      <span class="t-item">CLIENT_CENTRIC_APPROACH</span><span class="t-dot"> ■ </span>
+      <span class="t-item">SELF_TAUGHT_ENGINEERING</span><span class="t-dot"> ■ </span>
+      <span class="t-item">CUSTOM_PROJECTS</span><span class="t-dot"> ■ </span>
+      <span class="t-item">ADAPTABLE_SOLUTIONS</span><span class="t-dot"> ■ </span>
+      <span class="t-item">DREAMS_BEYOND_DEGREES</span><span class="t-dot"> ■ </span>
+      <span class="t-item">CLIENT_CENTRIC_APPROACH</span><span class="t-dot"> ■ </span>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat" data-code="0x01"><div class="sn">5+</div><div class="sl">Projects_Done</div></div>
+    <div class="stat" data-code="0x02"><div class="sn">100%</div><div class="sl">Self_Taught</div></div>
+    <div class="stat" data-code="0x03"><div class="sn">∞</div><div class="sl">Ideas_Active</div></div>
+    <div class="stat" data-code="0x04"><div class="sn">24/7</div><div class="sl">Always_Building</div></div>
+  </div>
+
+  <section class="section" id="projects">
+    <div class="stag">Services</div>
+    <h2>WHAT I BUILD</h2>
+    <div class="grid3">
+      <div class="feat"><div class="fnum">SYS::01</div><h3>Custom Engineering</h3><p>Bespoke solutions designed around your exact needs — no cookie-cutter templates, no off-the-shelf compromises.</p></div>
+      <div class="feat"><div class="fnum">SYS::02</div><h3>Rapid Prototyping</h3><p>From concept to working prototype fast. I iterate quickly and build with purpose, cutting time-to-result.</p></div>
+      <div class="feat"><div class="fnum">SYS::03</div><h3>Problem Solving</h3><p>Unconventional problems get unconventional solutions. I approach each challenge without preconceptions.</p></div>
+      <div class="feat"><div class="fnum">SYS::04</div><h3>Systems Design</h3><p>Architecture that scales. Solutions designed to grow alongside your needs, not constrain them.</p></div>
+      <div class="feat"><div class="fnum">SYS::05</div><h3>Technical Consulting</h3><p>Not sure how to approach a challenge? I'll help you map the terrain and chart the right path forward.</p></div>
+      <div class="feat"><div class="fnum">SYS::06</div><h3>Patreon Projects</h3><p>Support on Patreon to suggest ideas, commission custom builds, and get direct access to the engineer.</p></div>
+    </div>
+  </section>
+
+  <div class="support">
+    <div>
+      <div class="stag">Support</div>
+      <h2 style="font-size:1.4rem;margin-bottom:.4rem;">BACK THE BUILD</h2>
+      <p>Support my work on Patreon — suggest ideas, commission custom projects, and get direct access. Pricing varies by project complexity.</p>
+    </div>
+    <a href="http://patreon.com/mathieuengineering" class="pbtn" target="_blank">♥ SUPPORT_ON_PATREON</a>
+  </div>
+
+  <footer class="foot">
+    <div class="flogo">MATHIEU_ENGINEERING</div>
+    <a href="mailto:mathieu.engineering.company@gmail.com" class="femail">mathieu.engineering.company@gmail.com</a>
+    <div class="fcopy">© 2026 // ALL RIGHTS RESERVED</div>
+  </footer>
+
+</div>
+
+<script>
+const c=document.getElementById('mc'),x=c.getContext('2d');
+function r(){c.width=window.innerWidth;c.height=window.innerHeight;}
+r();window.addEventListener('resize',()=>{r();init();});
+const ch='アイウエオカキクケコサシスセソ0123456789ABCDEF<>{}[]';
+const fs=14;let cols=[];
+function init(){cols=Array.from({length:Math.floor(c.width/fs)},()=>Math.floor(Math.random()*-c.height));}
+init();
+setInterval(()=>{
+  x.fillStyle='rgba(0,0,0,.05)';x.fillRect(0,0,c.width,c.height);
+  x.font=`${fs}px 'Share Tech Mono',monospace`;
+  cols.forEach((y,i)=>{
+    const ch2=ch[Math.floor(Math.random()*ch.length)],px=i*fs,b=Math.random();
+    x.fillStyle=b>.97?'#fff':b>.8?'#00ff41':'#009922';
+    x.fillText(ch2,px,y);
+    if(y>c.height&&Math.random()>.975)cols[i]=0;else cols[i]=y+fs;
+  });
+},50);
+</script>
+</body>
+</html>
